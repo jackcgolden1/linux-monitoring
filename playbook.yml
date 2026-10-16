@@ -1,0 +1,60 @@
+- name: Set up Prometheus and Grafana monitoring
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Install Prometheus and node_exporter
+      ansible.builtin.apt:
+        name:
+          - prometheus
+          - prometheus-node-exporter
+        state: present
+        update_cache: true
+
+    - name: Add the Grafana signing key
+      ansible.builtin.get_url:
+        url: https://apt.grafana.com/gpg.key
+        dest: /etc/apt/keyrings/grafana.asc
+        mode: "0644"
+
+    - name: Add the Grafana package repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+        filename: grafana
+        state: present
+
+    - name: Install Grafana
+      ansible.builtin.apt:
+        name: grafana
+        state: present
+        update_cache: true
+
+    - name: Connect Grafana to Prometheus automatically
+      ansible.builtin.copy:
+        dest: /etc/grafana/provisioning/datasources/prometheus.yml
+        mode: "0644"
+        content: |
+          apiVersion: 1
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              url: http://localhost:9090
+              isDefault: true
+      notify: Restart Grafana
+
+    - name: Start and enable all monitoring services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - prometheus
+        - prometheus-node-exporter
+        - grafana-server
+
+  handlers:
+    - name: Restart Grafana
+      ansible.builtin.service:
+        name: grafana-server
+        state: restarted
