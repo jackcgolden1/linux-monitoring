@@ -35,10 +35,6 @@ flowchart TB
 - **Least privilege.** The server's IAM role only has Systems Manager access.
 - **Grafana is provisioned automatically.** The Prometheus data source is written by Ansible, so no clicking is needed after install.
 
-| First run | Second run |
-|---|---|
-| ![First run](docs/images/ansible-recap.png) | ![Second run](docs/images/idempotent.png) |
-
 ## Challenge I solved
 
 **AWS's Ansible document failed on Ubuntu 24.04.** `AWS-ApplyAnsiblePlaybooks` tries to install Ansible with `pip`, but Ubuntu 24.04 blocks system-wide pip installs (PEP 668, "externally-managed-environment"). I installed Ansible from Ubuntu's apt repository with `AWS-RunShellScript` instead, then ran the playbook with the document's dependency install turned off.
